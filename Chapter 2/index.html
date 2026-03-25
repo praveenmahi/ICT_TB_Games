@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Number System Drag & Drop Game</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f0f8ff;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #gameArea {
+            display: none;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+        }
+
+        .items, .targets {
+            width: 40%;
+        }
+
+        .draggable {
+            padding: 10px;
+            margin: 10px;
+            background: #4CAF50;
+            color: white;
+            cursor: grab;
+            border-radius: 5px;
+        }
+
+        .dropzone {
+            padding: 15px;
+            margin: 10px;
+            background: #ddd;
+            border: 2px dashed #555;
+            border-radius: 5px;
+        }
+
+        #scoreBoard {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Number System Match Game (Drag and Drop the Number System to their Respective base)</h1>
+
+<button onclick="startGame()">Start Game</button>
+
+<div id="gameArea">
+    <div class="container">
+        
+        <!-- Draggable Items -->
+        <div class="items">
+            <div class="draggable" draggable="true" id="decimal">Decimal</div>
+            <div class="draggable" draggable="true" id="binary">Binary</div>
+            <div class="draggable" draggable="true" id="octal">Octal</div>
+            <div class="draggable" draggable="true" id="hex">Hexadecimal</div>
+        </div>
+
+        <!-- Drop Targets -->
+        <div class="targets">
+            <div class="dropzone" data-match="decimal">Base 10</div>
+            <div class="dropzone" data-match="binary">Base 2</div>
+            <div class="dropzone" data-match="octal">Base 8</div>
+            <div class="dropzone" data-match="hex">Base 16</div>
+        </div>
+
+    </div>
+
+    <div id="scoreBoard">Score: 0</div>
+</div>
+
+<div id="endScreen" style="display:none;">
+    <h2 id="finalScore"></h2>
+    <button onclick="restartGame()">Restart Game</button>
+</div>
+
+<!-- Sounds -->
+<audio id="correctSound" src="correct.mp3"></audio>
+<audio id="wrongSound" src="wrong.mp3"></audio>
+
+<!-- Confetti Library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+let score = 0;
+let total = 4;
+
+const itemsData = [
+    { id: "decimal", name: "Decimal", base: "Base 10" },
+    { id: "binary", name: "Binary", base: "Base 2" },
+    { id: "octal", name: "Octal", base: "Base 8" },
+    { id: "hex", name: "Hexadecimal", base: "Base 16" }
+];
+
+function startGame() {
+    document.querySelector("button").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+
+    loadGame();
+}
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function loadGame() {
+    const itemsContainer = document.querySelector(".items");
+    const targetsContainer = document.querySelector(".targets");
+
+    itemsContainer.innerHTML = "";
+    targetsContainer.innerHTML = "";
+
+    let shuffledItems = shuffle([...itemsData]);
+    let shuffledTargets = shuffle([...itemsData]);
+
+    // Create draggable items
+    shuffledItems.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "draggable";
+        div.draggable = true;
+        div.id = item.id;
+        div.innerText = item.name;
+
+        div.addEventListener("dragstart", dragStart);
+        itemsContainer.appendChild(div);
+    });
+
+    // Create drop zones
+    shuffledTargets.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "dropzone";
+        div.setAttribute("data-match", item.id);
+        div.innerText = item.base;
+
+        div.addEventListener("dragover", dragOver);
+        div.addEventListener("drop", dropItem);
+        targetsContainer.appendChild(div);
+    });
+}
+
+function dragStart(e) {
+    e.dataTransfer.setData("text", e.target.id);
+}
+
+function dragOver(e) {
+    e.preventDefault();
+}
+
+function dropItem(e) {
+    e.preventDefault();
+    let draggedId = e.dataTransfer.getData("text");
+    let match = e.target.getAttribute("data-match");
+
+    if (draggedId === match) {
+        e.target.style.background = "#8BC34A";
+        e.target.innerHTML += " ✔";
+        document.getElementById(draggedId).style.display = "none";
+        score++;
+
+        document.getElementById("correctSound").play();
+
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+    } else {
+        document.getElementById("wrongSound").play();
+       //alert("Wrong match! Try again.");
+    }
+
+    document.getElementById("scoreBoard").innerHTML = "Score: " + score;
+
+    if (score === total) {
+        endGame();
+    }
+}
+
+function endGame() {
+    document.getElementById("gameArea").style.display = "none";
+    document.getElementById("endScreen").style.display = "block";
+    document.getElementById("finalScore").innerHTML = "🎉 Your Score: " + score + " / " + total;
+}
+
+function restartGame() {
+    location.reload();
+}
+</script>
+</body>
+</html>
